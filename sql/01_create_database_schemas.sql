@@ -1,1 +1,16 @@
+-- Database creation
 
+CREATE DATABASE hospital_management;
+
+-- Schemas creation
+
+CREATE SCHEMA IF NOT EXISTS raw;
+
+
+CREATE SCHEMA IF NOT EXISTS harmonized;
+
+
+CREATE SCHEMA IF NOT EXISTS analytics;
+
+
+CREATE SCHEMA IF NOT EXISTS automation;
