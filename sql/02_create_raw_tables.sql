@@ -82,4 +82,6 @@ CREATE TABLE raw.billing (
 );
 
 
-SELECT * FROM raw.patients;
+SELECT * FROM raw.doctors;
+
+SELECT * FROM automation.ingestion_log;
