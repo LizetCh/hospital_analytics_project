@@ -80,3 +80,297 @@ CREATE TABLE harmonized.billing (
     source_file        TEXT,
     transformed_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+
+
+-- ============================================================
+-- Transformation procedure: Patients
+-- ============================================================
+
+CREATE OR REPLACE PROCEDURE automation.sp_transform_patients()
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    TRUNCATE TABLE harmonized.patients;
+
+    INSERT INTO harmonized.patients (
+        patient_id,
+        first_name,
+        last_name,
+        gender,
+        date_of_birth,
+        contact_number,
+        address,
+        registration_date,
+        insurance_provider,
+        insurance_number,
+        email
+    )
+    SELECT
+        patient_id,
+        first_name,
+        last_name,
+        CASE
+            WHEN LOWER(TRIM(gender)) = 'female' THEN 'F'
+            WHEN LOWER(TRIM(gender)) = 'male' THEN 'M'
+            WHEN LOWER(TRIM(gender)) = 'f' THEN 'F'
+            WHEN LOWER(TRIM(gender)) = 'm' THEN 'M'
+            ELSE 'O'
+        END AS gender,
+        TO_DATE(date_of_birth, 'DD/MM/YYYY') AS date_of_birth,
+        REGEXP_REPLACE(contact_number, '[^0-9]', '', 'g') AS contact_number,
+        address,
+        TO_DATE(registration_date, 'DD/MM/YYYY') AS registration_date,
+        insurance_provider,
+        insurance_number,
+        LOWER(TRIM(email)) AS email
+    FROM raw.patients
+    WHERE patient_id IS NOT NULL;
+END;
+$$;
+
+
+
+-- ============================================================
+-- Transformation procedure: Doctors
+-- ============================================================
+
+CREATE OR REPLACE PROCEDURE automation.sp_transform_doctors()
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    TRUNCATE TABLE harmonized.doctors;
+
+    INSERT INTO harmonized.doctors (
+        doctor_id,
+        first_name,
+        last_name,
+        specialization,
+        phone_number,
+        years_experience,
+        hospital_branch,
+        email
+    )
+    SELECT
+        doctor_id,
+        first_name,
+        last_name,
+        INITCAP(TRIM(specialization)) AS specialization,
+        REGEXP_REPLACE(phone_number, '[^0-9]', '', 'g') AS phone_number,
+        NULLIF(years_experience, '')::INTEGER AS years_experience,
+        hospital_branch,
+        LOWER(TRIM(email)) AS email
+    FROM raw.doctors
+    WHERE doctor_id IS NOT NULL;
+END;
+$$;
+
+
+-- ============================================================
+-- Transformation procedure: Appointments
+-- ============================================================
+
+CREATE OR REPLACE PROCEDURE automation.sp_transform_appointments()
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    TRUNCATE TABLE harmonized.appointments;
+
+    INSERT INTO harmonized.appointments (
+        appointment_id,
+        patient_id,
+        doctor_id,
+        appointment_date,
+        appointment_time,
+        reason_for_visit,
+        status
+    )
+    SELECT
+        appointment_id,
+        patient_id,
+        doctor_id,
+        TO_DATE(appointment_date, 'YYYY-MM-DD') AS appointment_date,
+        CASE
+            WHEN UPPER(appointment_time) LIKE '%AM%'
+              OR UPPER(appointment_time) LIKE '%PM%'
+            THEN TO_TIMESTAMP(appointment_time, 'HH12:MI AM')::TIME
+            ELSE appointment_time::TIME
+        END AS appointment_time,
+        reason_for_visit,
+        INITCAP(TRIM(status)) AS status
+    FROM raw.appointments
+    WHERE appointment_id IS NOT NULL;
+END;
+$$;
+
+
+
+
+-- ============================================================
+-- Transformation procedure: Doctors
+-- ============================================================
+
+CREATE OR REPLACE PROCEDURE automation.sp_transform_doctors()
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    TRUNCATE TABLE harmonized.doctors;
+
+    INSERT INTO harmonized.doctors (
+        doctor_id,
+        first_name,
+        last_name,
+        specialization,
+        phone_number,
+        years_experience,
+        hospital_branch,
+        email
+    )
+    SELECT
+        doctor_id,
+        first_name,
+        last_name,
+        INITCAP(TRIM(specialization)) AS specialization,
+        REGEXP_REPLACE(phone_number, '[^0-9]', '', 'g') AS phone_number,
+        NULLIF(years_experience, '')::INTEGER AS years_experience,
+        hospital_branch,
+        LOWER(TRIM(email)) AS email
+    FROM raw.doctors
+    WHERE doctor_id IS NOT NULL;
+END;
+$$;
+
+
+-- ============================================================
+-- Transformation procedure: Appointments
+-- ============================================================
+
+CREATE OR REPLACE PROCEDURE automation.sp_transform_appointments()
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    TRUNCATE TABLE harmonized.appointments;
+
+    INSERT INTO harmonized.appointments (
+        appointment_id,
+        patient_id,
+        doctor_id,
+        appointment_date,
+        appointment_time,
+        reason_for_visit,
+        status
+    )
+    SELECT
+        appointment_id,
+        patient_id,
+        doctor_id,
+        TO_DATE(appointment_date, 'YYYY-MM-DD') AS appointment_date,
+        CASE
+            WHEN UPPER(appointment_time) LIKE '%AM%'
+              OR UPPER(appointment_time) LIKE '%PM%'
+            THEN TO_TIMESTAMP(appointment_time, 'HH12:MI AM')::TIME
+            ELSE appointment_time::TIME
+        END AS appointment_time,
+        reason_for_visit,
+        INITCAP(TRIM(status)) AS status
+    FROM raw.appointments
+    WHERE appointment_id IS NOT NULL;
+END;
+$$;
+
+
+-- ============================================================
+-- Transformation procedure: Treatments
+-- ============================================================
+
+CREATE OR REPLACE PROCEDURE automation.sp_transform_treatments()
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    TRUNCATE TABLE harmonized.treatments;
+
+    INSERT INTO harmonized.treatments (
+        treatment_id,
+        appointment_id,
+        treatment_type,
+        description,
+        treatment_date
+    )
+    SELECT
+        treatment_id,
+        appointment_id,
+        treatment_type,
+        description,
+        TO_DATE(treatment_date, 'DD/MM/YYYY') AS treatment_date
+    FROM raw.treatments
+    WHERE treatment_id IS NOT NULL;
+END;
+$$;
+
+
+-- ============================================================
+-- Transformation procedure: Billing
+-- ============================================================
+
+CREATE OR REPLACE PROCEDURE automation.sp_transform_billing()
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    TRUNCATE TABLE harmonized.billing;
+
+    INSERT INTO harmonized.billing (
+        bill_id,
+        patient_id,
+        treatment_id,
+        bill_date,
+        amount,
+        payment_method,
+        payment_status
+    )
+    SELECT
+        bill_id,
+        patient_id,
+        treatment_id,
+        TO_DATE(bill_date, 'DD/MM/YYYY') AS bill_date,
+        NULLIF(REGEXP_REPLACE(amount, '[^0-9.]', '', 'g'), '')::NUMERIC(10,2) AS amount,
+        CASE
+            WHEN LOWER(REPLACE(payment_method, ' ', '')) = 'insurance'
+                THEN 'Insurance'
+            WHEN LOWER(REPLACE(payment_method, ' ', '')) = 'creditcard'
+                THEN 'Credit Card'
+            WHEN LOWER(REPLACE(payment_method, ' ', '')) = 'cash'
+                THEN 'Cash'
+            ELSE 'Unknown'
+        END AS payment_method,
+        payment_status
+    FROM raw.billing
+    WHERE bill_id IS NOT NULL;
+END;
+$$;
+
+
+
+CREATE OR REPLACE PROCEDURE automation.sp_transform_all()
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    CALL automation.sp_transform_patients();
+    CALL automation.sp_transform_doctors();
+    CALL automation.sp_transform_appointments();
+    CALL automation.sp_transform_treatments();
+    CALL automation.sp_transform_billing();
+END;
+$$;
+
+
+-- ============================================================
+-- Manual test
+-- ============================================================
+
+-- Before running stored procedures
+SELECT COUNT(*) FROM harmonized.patients;
+SELECT COUNT(*) FROM harmonized.doctors;
+
+CALL automation.sp_transform_patients();
+CALL automation.sp_transform_doctors();
+
