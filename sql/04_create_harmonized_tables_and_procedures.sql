@@ -371,6 +371,7 @@ $$;
 SELECT COUNT(*) FROM harmonized.patients;
 SELECT COUNT(*) FROM harmonized.doctors;
 SELECT COUNT(*) FROM harmonized.billing;
+SELECT COUNT(*) FROM harmonized.treatments;
 
 SELECT * FROM automation.ingestion_log;
 
