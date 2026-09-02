@@ -370,6 +370,9 @@ $$;
 -- Before running stored procedures
 SELECT COUNT(*) FROM harmonized.patients;
 SELECT COUNT(*) FROM harmonized.doctors;
+SELECT COUNT(*) FROM harmonized.billing;
+
+SELECT * FROM automation.ingestion_log;
 
 CALL automation.sp_transform_patients();
 CALL automation.sp_transform_doctors();
