@@ -3,3 +3,5 @@ dotenv
 psycopg2-binary
 sqlalchemy
 watchdog
+streamlit
+plotly
